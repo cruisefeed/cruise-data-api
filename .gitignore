@@ -1,0 +1,12 @@
+# Example output
+cruises.csv
+*.csv
+
+# Secrets
+.env
+
+# Deps / caches
+node_modules/
+__pycache__/
+*.pyc
+.DS_Store
