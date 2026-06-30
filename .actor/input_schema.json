@@ -1,0 +1,17 @@
+{
+    "title": "CruiseFeed API (Standby)",
+    "description": "This Actor runs in Apify Standby mode - it is a live REST API, not a batch job. Start it, then send GET requests to its standby URL (e.g. /cruises?region=Caribbean&limit=10). See the README for the full endpoint list. No input is required.",
+    "type": "object",
+    "schemaVersion": 1,
+    "properties": {
+        "apiBaseUrl": {
+            "title": "Upstream API base URL",
+            "type": "string",
+            "description": "Advanced: override the CruiseFeed API base URL (for self-hosted mirrors). Leave as default.",
+            "default": "https://api.cruisefeed.io",
+            "editor": "textfield",
+            "sectionCaption": "Advanced"
+        }
+    },
+    "required": []
+}

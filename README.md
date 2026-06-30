@@ -21,6 +21,44 @@ curl -H "x-api-key: $CRUISEFEED_API_KEY" \
 
 ---
 
+## Run it on Apify (Standby API)
+
+This Actor exposes the CruiseFeed API in **Apify Standby mode** - an always-on
+REST API, not a batch job. Start it once and it stays warm; then send normal
+`GET` requests to its **Standby URL** and get a live JSON/CSV response. **You do
+not need a CruiseFeed API key** - the Actor carries one, and you pay through
+Apify (pay-per-event, per record returned).
+
+The Standby base URL looks like `https://<username>--cruise-data-api.apify.actor`.
+Authenticate Apify requests with your Apify token (header `Authorization: Bearer
+<APIFY_TOKEN>` or `?token=<APIFY_TOKEN>`):
+
+```bash
+# Caribbean sailings under $1,200, live through Apify Standby - no CruiseFeed key
+curl "https://<username>--cruise-data-api.apify.actor/cruises?region=Caribbean&max_price=1200&limit=10" \
+  -H "Authorization: Bearer $APIFY_TOKEN"
+
+# one ship by IMO, with full specs
+curl "https://<username>--cruise-data-api.apify.actor/ships/9839419" \
+  -H "Authorization: Bearer $APIFY_TOKEN"
+```
+
+Every endpoint below is available on the Standby URL with the **same paths and
+query parameters**. The Actor proxies them 1:1 to the CruiseFeed API.
+
+**Billing.** Pay-per-event: you are charged per cruise/ship **record returned**.
+Single-record lookups (one cruise, one ship, one history) and reference lists
+(`/cruise-lines`, `/ports`) count as a single record. On the free tier, list
+endpoints return a 5-record sample per page. Need the full catalogue, daily
+price history or bulk/managed delivery? That is cheaper per record direct from
+**https://cruisefeed.io** - this Actor is built for low-latency, on-demand
+lookups inside Apify workflows and integrations.
+
+> Prefer a one-shot bulk download to an Apify dataset instead of a live API?
+> Use our batch Actor **CruiseFeed.io - Cruise Data Feed**.
+
+---
+
 ## What's in the feed
 
 | | |

@@ -1,0 +1,13 @@
+.git
+.venv
+venv
+__pycache__
+*.pyc
+.pytest_cache
+.mypy_cache
+.DS_Store
+.env
+storage
+apify_storage
+node_modules
+*.csv

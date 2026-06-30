@@ -10,3 +10,7 @@ node_modules/
 __pycache__/
 *.pyc
 .DS_Store
+
+# Apify local run storage
+storage/
+apify_storage/
