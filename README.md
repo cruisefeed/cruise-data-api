@@ -29,6 +29,7 @@ curl -H "x-api-key: $CRUISEFEED_API_KEY" \
 | **Sailings** | departure & return dates across the booking window, by ship and region |
 | **Itineraries** | day-by-day ports of call with country, plus embark/disembark ports |
 | **Pricing** | lead-in fare + price-per-night, with daily price/availability **history** for change tracking |
+| **Ships** | 1,500+ vessels with specs: capacity, gross tonnage, length/beam, decks, cabins, builder, class, sister ships, flag |
 | **Delivery** | REST JSON, CSV export, or push to your S3 / warehouse · refreshed monthly → daily by plan |
 
 One normalized schema across all lines, deduplicated, with stable IDs. The data is
@@ -51,9 +52,11 @@ Get a key at **https://cruisefeed.io**.
 |--------|------|:----:|-------------|
 | GET | `/cruises` | ✅ | List & filter sailings (the workhorse) |
 | GET | `/cruises.csv` | ✅ | Same filters, streamed as CSV |
-| GET | `/cruises/{source}/{source_id}` | ✅ | Get one sailing by natural key |
+| GET | `/cruises/{source}/{source_id}` | ✅ | Get one sailing (enriched with its `ship`) |
 | GET | `/cruises/{source}/{source_id}/history` | ✅ | Price & availability history |
 | GET | `/changes` | ✅ | Recent price changes (fare-drop alerts) |
+| GET | `/ships` | ✅ | List & filter ships (specs, capacity, build) |
+| GET | `/ships/{imo}` | ✅ | Get one ship by IMO number |
 | GET | `/cruise-lines` | ✅ | Distinct cruise line names |
 | GET | `/ships` | ✅ | Distinct ship names |
 | GET | `/ports` | ✅ | Distinct departure ports |
@@ -126,6 +129,21 @@ curl -H "x-api-key: $CRUISEFEED_API_KEY" \
 curl -H "x-api-key: $CRUISEFEED_API_KEY" \
   "https://api.cruisefeed.io/changes?since=2026-06-20&cruise_line=MSC%20Cruises"
 ```
+
+### Ship metadata
+
+```bash
+# search ships by name
+curl -H "x-api-key: $CRUISEFEED_API_KEY" \
+  "https://api.cruisefeed.io/ships?q=world%20europa"
+
+# one ship by IMO (specs: tonnage, decks, cabins, capacity, builder, sister ships)
+curl -H "x-api-key: $CRUISEFEED_API_KEY" \
+  "https://api.cruisefeed.io/ships/9839419"
+```
+
+The single-cruise endpoint (`GET /cruises/{source}/{source_id}`) returns a `ship`
+object inline, so you get the vessel's specs alongside the sailing in one call.
 
 ## Code examples
 

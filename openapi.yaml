@@ -34,6 +34,8 @@ security:
 tags:
   - name: Cruises
     description: Search, export and retrieve sailings.
+  - name: Ships
+    description: Vessel metadata (specs, capacity, build, dimensions).
   - name: History
     description: Price & availability change tracking.
   - name: Reference
@@ -114,10 +116,10 @@ paths:
         - { name: source_id, in: path, required: true, schema: { type: string }, description: "The source's id for the sailing." }
       responses:
         "200":
-          description: The sailing.
+          description: The sailing, enriched with its matched ship.
           content:
             application/json:
-              schema: { $ref: "#/components/schemas/Cruise" }
+              schema: { $ref: "#/components/schemas/CruiseDetail" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "404": { $ref: "#/components/responses/NotFound" }
 
@@ -161,6 +163,46 @@ paths:
                 items: { $ref: "#/components/schemas/PriceChange" }
         "401": { $ref: "#/components/responses/Unauthorized" }
 
+  /ships:
+    get:
+      tags: [Ships]
+      summary: List & filter ships
+      description: >
+        Vessel metadata — capacity, gross tonnage, length/beam, decks, cabins, builder,
+        class, sister ships, flag and more — for 1,500+ ships, sourced from cruisemapper.
+      operationId: listShips
+      parameters:
+        - { name: q, in: query, schema: { type: string }, description: "Case-insensitive ship-name search." }
+        - { name: operator, in: query, schema: { type: string }, description: "Filter by operator (partial match)." }
+        - { name: flag_state, in: query, schema: { type: string }, description: "Filter by flag state (partial match)." }
+        - { name: limit, in: query, schema: { type: integer, minimum: 1, maximum: 500, default: 50 } }
+        - { name: offset, in: query, schema: { type: integer, default: 0 } }
+      responses:
+        "200":
+          description: A page of ships.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ShipPage" }
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /ships/{ship_id}:
+    get:
+      tags: [Ships]
+      summary: Get a single ship
+      description: One vessel by its source_id — the IMO number (or a URL slug when IMO is absent).
+      operationId: getShip
+      parameters:
+        - { name: ship_id, in: path, required: true, schema: { type: string }, description: "IMO number, e.g. 9187796." }
+      responses:
+        "200":
+          description: The ship.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Ship" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
   /cruise-lines:
     get:
       tags: [Reference]
@@ -174,19 +216,6 @@ paths:
             application/json:
               schema: { type: array, items: { type: string } }
               example: ["AIDA Cruises", "Carnival", "MSC Cruises", "Royal Caribbean", "Viking"]
-
-  /ships:
-    get:
-      tags: [Reference]
-      summary: List ship names
-      description: Distinct ship names in the feed.
-      operationId: listShips
-      responses:
-        "200":
-          description: Ship names.
-          content:
-            application/json:
-              schema: { type: array, items: { type: string } }
 
   /ports:
     get:
@@ -265,6 +294,61 @@ components:
         total: { type: integer, example: 1843, description: "Total matches across all pages." }
         limit: { type: integer, example: 50 }
         offset: { type: integer, example: 0 }
+
+    Ship:
+      type: object
+      description: Vessel metadata for one ship.
+      properties:
+        source: { type: string, example: cruisemapper }
+        source_id: { type: string, example: "9187796", description: "IMO number (natural key)." }
+        imo_number: { type: string, example: "9187796" }
+        mmsi_number: { type: string, nullable: true }
+        ship_name: { type: string, example: MSC World Europa }
+        operator: { type: string, example: MSC Cruises }
+        owner: { type: string, example: "MSC Cruises S.A." }
+        year_built: { type: integer, example: 2022 }
+        last_refurbishment: { type: integer, nullable: true, example: 2024 }
+        passengers: { type: string, example: "2210 - 2680", description: "Raw capacity range." }
+        passengers_max: { type: integer, example: 6762 }
+        crew: { type: integer, example: 2138 }
+        passengers_to_space_ratio: { type: number, example: 39 }
+        gross_tonnage: { type: integer, example: 215863 }
+        length_m: { type: number, example: 333 }
+        beam_m: { type: number, example: 47 }
+        speed_knots: { type: number, example: 22 }
+        decks: { type: integer, example: 22 }
+        decks_with_cabins: { type: integer, example: 16 }
+        cabins: { type: integer, example: 2626 }
+        ship_class: { type: string, example: World }
+        builder: { type: string, example: "Chantiers de l'Atlantique" }
+        building_cost: { type: string, example: "EUR 1 billion" }
+        flag_state: { type: string, example: Malta }
+        engines_power: { type: string }
+        propulsion_power: { type: string }
+        sister_ships: { type: array, items: { type: string } }
+        former_names: { type: array, items: { type: string } }
+        christened_by: { type: string, nullable: true }
+        ship_url: { type: string }
+        cover_image: { type: string }
+        scraped_at: { type: string, format: date-time }
+
+    ShipPage:
+      type: object
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/Ship" }
+        total: { type: integer, example: 1500 }
+        limit: { type: integer, example: 50 }
+        offset: { type: integer, example: 0 }
+
+    CruiseDetail:
+      description: A single sailing, enriched with its matched ship (null if unknown).
+      allOf:
+        - $ref: "#/components/schemas/Cruise"
+        - type: object
+          properties:
+            ship: { $ref: "#/components/schemas/Ship" }
 
     HistoryPoint:
       type: object
