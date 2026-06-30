@@ -1,0 +1,1125 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "CruiseFeed API (Apify Standby)",
+    "version": "1.0.0",
+    "description": "Live REST API for normalized cruise inventory - cruise lines, ships, sailing dates, day-by-day itineraries, ports and lead-in pricing - across 60+ lines. Served on the Apify platform in Standby mode; requests are proxied to the CruiseFeed data API. Apify handles authentication automatically, so you can try any endpoint from this page. Billed pay-per-event, per record returned. Full catalogue & managed delivery: https://cruisefeed.io",
+    "termsOfService": "https://cruisefeed.io",
+    "contact": {
+      "name": "CruiseFeed",
+      "url": "https://cruisefeed.io",
+      "email": "support@cruisefeed.io"
+    },
+    "license": {
+      "name": "Proprietary — data licensed per the CruiseFeed subscription terms",
+      "url": "https://cruisefeed.io"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://vulnv--cruise-data-api.apify.actor",
+      "description": "Apify Standby URL (replaced automatically by Apify)"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Cruises",
+      "description": "Search, export and retrieve sailings."
+    },
+    {
+      "name": "Ships",
+      "description": "Vessel metadata (specs, capacity, build, dimensions)."
+    },
+    {
+      "name": "History",
+      "description": "Price & availability change tracking."
+    },
+    {
+      "name": "Reference",
+      "description": "Reference lists (cruise lines, ships, ports). Requires an API key."
+    }
+  ],
+  "paths": {
+    "/cruises": {
+      "get": {
+        "tags": [
+          "Cruises"
+        ],
+        "summary": "List & filter cruises",
+        "description": "Paginated, filterable list of sailings. The workhorse endpoint — combine any of the filters below. Results are deduplicated by default.\n",
+        "operationId": "listCruises",
+        "parameters": [
+          {
+            "name": "source",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Source/site key, e.g. cruisemapper."
+          },
+          {
+            "name": "cruise_line",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Exact cruise line name (see GET /cruise-lines)."
+          },
+          {
+            "name": "ship_name",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Exact ship name."
+          },
+          {
+            "name": "embark_port",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Departure (embarkation) port."
+          },
+          {
+            "name": "region",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Destination/region, partial match (e.g. Caribbean)."
+          },
+          {
+            "name": "departure_from",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "description": "Sailings departing on/after (YYYY-MM-DD)."
+          },
+          {
+            "name": "departure_to",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "description": "Sailings departing on/before (YYYY-MM-DD)."
+          },
+          {
+            "name": "min_price",
+            "in": "query",
+            "schema": {
+              "type": "number"
+            },
+            "description": "Minimum lead-in price."
+          },
+          {
+            "name": "max_price",
+            "in": "query",
+            "schema": {
+              "type": "number"
+            },
+            "description": "Maximum lead-in price."
+          },
+          {
+            "name": "min_nights",
+            "in": "query",
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Minimum nights."
+          },
+          {
+            "name": "max_nights",
+            "in": "query",
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Maximum nights."
+          },
+          {
+            "name": "round_trip",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            },
+            "description": "Only round-trip (true) or one-way (false)."
+          },
+          {
+            "name": "dedupe",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "default": true
+            },
+            "description": "Collapse duplicate sailings. Default true."
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "default": "departure_date"
+            },
+            "description": "Sort field. Default departure_date."
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200,
+              "default": 50
+            },
+            "description": "Page size, 1–200."
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 0
+            },
+            "description": "Rows to skip."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A page of sailings.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CruiseList"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/cruises.csv": {
+      "get": {
+        "tags": [
+          "Cruises"
+        ],
+        "summary": "Export cruises as CSV",
+        "description": "Same filters as `GET /cruises`, streamed as a CSV file for spreadsheets and warehouse loads.",
+        "operationId": "exportCruisesCsv",
+        "parameters": [
+          {
+            "name": "source",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "cruise_line",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ship_name",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "embark_port",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "region",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "departure_from",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "departure_to",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "min_price",
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "max_price",
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "min_nights",
+            "in": "query",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "max_nights",
+            "in": "query",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "round_trip",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "dedupe",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "default": true
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "CSV export.",
+            "content": {
+              "text/csv": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/cruises/{source}/{source_id}": {
+      "get": {
+        "tags": [
+          "Cruises"
+        ],
+        "summary": "Get a single cruise",
+        "description": "Fetch one sailing by its natural key (`source` + `source_id`), returned on every record.",
+        "operationId": "getCruise",
+        "parameters": [
+          {
+            "name": "source",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Source/site key, e.g. cruisemapper."
+          },
+          {
+            "name": "source_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The source's id for the sailing."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The sailing, enriched with its matched ship.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CruiseDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/cruises/{source}/{source_id}/history": {
+      "get": {
+        "tags": [
+          "History"
+        ],
+        "summary": "Price & availability history",
+        "description": "Point-in-time price snapshots for a sailing, oldest to newest — track how a fare has moved.",
+        "operationId": "getCruiseHistory",
+        "parameters": [
+          {
+            "name": "source",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "source_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Price history for the sailing.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CruiseHistory"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/changes": {
+      "get": {
+        "tags": [
+          "History"
+        ],
+        "summary": "Recent price changes",
+        "description": "Sailings whose price changed between the two most recent snapshots — ideal for fare-drop alerts.",
+        "operationId": "listChanges",
+        "parameters": [
+          {
+            "name": "since",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "description": "Only changes on/after this date (YYYY-MM-DD)."
+          },
+          {
+            "name": "source",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Filter by source/site key."
+          },
+          {
+            "name": "cruise_line",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Filter by cruise line."
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 100
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 0
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Recent price changes.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PriceChange"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ships": {
+      "get": {
+        "tags": [
+          "Ships"
+        ],
+        "summary": "List & filter ships",
+        "description": "Vessel metadata — capacity, gross tonnage, length/beam, decks, cabins, builder, class, sister ships, flag and more — for 1,500+ ships, sourced from cruisemapper.\n",
+        "operationId": "listShips",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Case-insensitive ship-name search."
+          },
+          {
+            "name": "operator",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Filter by operator (partial match)."
+          },
+          {
+            "name": "flag_state",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Filter by flag state (partial match)."
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 500,
+              "default": 50
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 0
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A page of ships.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShipPage"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ships/{ship_id}": {
+      "get": {
+        "tags": [
+          "Ships"
+        ],
+        "summary": "Get a single ship",
+        "description": "One vessel by its source_id — the IMO number (or a URL slug when IMO is absent).",
+        "operationId": "getShip",
+        "parameters": [
+          {
+            "name": "ship_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "IMO number, e.g. 9187796."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The ship.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Ship"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/cruise-lines": {
+      "get": {
+        "tags": [
+          "Reference"
+        ],
+        "summary": "List cruise line names",
+        "description": "Distinct cruise line names in the feed.",
+        "operationId": "listCruiseLines",
+        "responses": {
+          "200": {
+            "description": "Cruise line names.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "example": [
+                  "AIDA Cruises",
+                  "Carnival",
+                  "MSC Cruises",
+                  "Royal Caribbean",
+                  "Viking"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ports": {
+      "get": {
+        "tags": [
+          "Reference"
+        ],
+        "summary": "List departure ports",
+        "description": "Distinct embarkation ports in the feed.",
+        "operationId": "listPorts",
+        "responses": {
+          "200": {
+            "description": "Port names.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/stats": {
+      "get": {
+        "tags": [
+          "Reference"
+        ],
+        "summary": "Catalogue stats",
+        "description": "Totals for the feed: overall and deduplicated counts, plus per-source counts and last-scraped timestamps.",
+        "operationId": "getStats",
+        "responses": {
+          "200": {
+            "description": "Catalogue totals.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "total": {
+                      "type": "integer",
+                      "example": 75613
+                    },
+                    "unique_total": {
+                      "type": "integer",
+                      "example": 54311
+                    },
+                    "sources": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "source": {
+                            "type": "string",
+                            "example": "msc"
+                          },
+                          "count": {
+                            "type": "integer",
+                            "example": 2915
+                          },
+                          "last_scraped_at": {
+                            "type": "string",
+                            "format": "date-time"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "responses": {
+      "NotFound": {
+        "description": "No matching record.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "example": {
+              "detail": "Not found."
+            }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "Cruise": {
+        "type": "object",
+        "description": "A single sailing, normalized across all cruise lines.",
+        "properties": {
+          "source": {
+            "type": "string",
+            "example": "cruisemapper",
+            "description": "Source/site key."
+          },
+          "source_id": {
+            "type": "string",
+            "example": "msc-world-europa-2026-09-12",
+            "description": "Natural key within the source."
+          },
+          "cruise_line": {
+            "type": "string",
+            "example": "MSC Cruises"
+          },
+          "ship_name": {
+            "type": "string",
+            "example": "MSC World Europa"
+          },
+          "title": {
+            "type": "string",
+            "example": "7-Night Western Mediterranean"
+          },
+          "departure_date": {
+            "type": "string",
+            "format": "date",
+            "example": "2026-09-12"
+          },
+          "return_date": {
+            "type": "string",
+            "format": "date",
+            "example": "2026-09-19"
+          },
+          "duration_days": {
+            "type": "integer",
+            "example": 8
+          },
+          "nights": {
+            "type": "integer",
+            "example": 7
+          },
+          "round_trip": {
+            "type": "boolean",
+            "example": true
+          },
+          "embark_port": {
+            "type": "string",
+            "example": "Barcelona"
+          },
+          "disembark_port": {
+            "type": "string",
+            "example": "Barcelona"
+          },
+          "region": {
+            "type": "string",
+            "example": "Western Mediterranean"
+          },
+          "price_amount": {
+            "type": "number",
+            "example": 799
+          },
+          "price_currency": {
+            "type": "string",
+            "example": "USD"
+          },
+          "price_per_night": {
+            "type": "number",
+            "example": 114.14
+          },
+          "itinerary": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ItineraryStop"
+            }
+          },
+          "scraped_at": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-06-28T04:12:00Z"
+          }
+        }
+      },
+      "ItineraryStop": {
+        "type": "object",
+        "properties": {
+          "seq": {
+            "type": "integer",
+            "example": 2
+          },
+          "port": {
+            "type": "string",
+            "example": "Marseille"
+          },
+          "date_raw": {
+            "type": "string",
+            "example": "13 Sep"
+          },
+          "is_embark": {
+            "type": "boolean",
+            "example": false
+          },
+          "is_disembark": {
+            "type": "boolean",
+            "example": false
+          }
+        }
+      },
+      "CruiseList": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Cruise"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "example": 1843,
+            "description": "Total matches across all pages."
+          },
+          "limit": {
+            "type": "integer",
+            "example": 50
+          },
+          "offset": {
+            "type": "integer",
+            "example": 0
+          }
+        }
+      },
+      "Ship": {
+        "type": "object",
+        "description": "Vessel metadata for one ship.",
+        "properties": {
+          "source": {
+            "type": "string",
+            "example": "cruisemapper"
+          },
+          "source_id": {
+            "type": "string",
+            "example": "9187796",
+            "description": "IMO number (natural key)."
+          },
+          "imo_number": {
+            "type": "string",
+            "example": "9187796"
+          },
+          "mmsi_number": {
+            "type": "string",
+            "nullable": true
+          },
+          "ship_name": {
+            "type": "string",
+            "example": "MSC World Europa"
+          },
+          "operator": {
+            "type": "string",
+            "example": "MSC Cruises"
+          },
+          "owner": {
+            "type": "string",
+            "example": "MSC Cruises S.A."
+          },
+          "year_built": {
+            "type": "integer",
+            "example": 2022
+          },
+          "last_refurbishment": {
+            "type": "integer",
+            "nullable": true,
+            "example": 2024
+          },
+          "passengers": {
+            "type": "string",
+            "example": "2210 - 2680",
+            "description": "Raw capacity range."
+          },
+          "passengers_max": {
+            "type": "integer",
+            "example": 6762
+          },
+          "crew": {
+            "type": "integer",
+            "example": 2138
+          },
+          "passengers_to_space_ratio": {
+            "type": "number",
+            "example": 39
+          },
+          "gross_tonnage": {
+            "type": "integer",
+            "example": 215863
+          },
+          "length_m": {
+            "type": "number",
+            "example": 333
+          },
+          "beam_m": {
+            "type": "number",
+            "example": 47
+          },
+          "speed_knots": {
+            "type": "number",
+            "example": 22
+          },
+          "decks": {
+            "type": "integer",
+            "example": 22
+          },
+          "decks_with_cabins": {
+            "type": "integer",
+            "example": 16
+          },
+          "cabins": {
+            "type": "integer",
+            "example": 2626
+          },
+          "ship_class": {
+            "type": "string",
+            "example": "World"
+          },
+          "builder": {
+            "type": "string",
+            "example": "Chantiers de l'Atlantique"
+          },
+          "building_cost": {
+            "type": "string",
+            "example": "EUR 1 billion"
+          },
+          "flag_state": {
+            "type": "string",
+            "example": "Malta"
+          },
+          "engines_power": {
+            "type": "string"
+          },
+          "propulsion_power": {
+            "type": "string"
+          },
+          "sister_ships": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "former_names": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "christened_by": {
+            "type": "string",
+            "nullable": true
+          },
+          "ship_url": {
+            "type": "string"
+          },
+          "cover_image": {
+            "type": "string"
+          },
+          "scraped_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "ShipPage": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Ship"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "example": 1500
+          },
+          "limit": {
+            "type": "integer",
+            "example": 50
+          },
+          "offset": {
+            "type": "integer",
+            "example": 0
+          }
+        }
+      },
+      "CruiseDetail": {
+        "description": "A single sailing, enriched with its matched ship (null if unknown).",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Cruise"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "ship": {
+                "$ref": "#/components/schemas/Ship"
+              }
+            }
+          }
+        ]
+      },
+      "HistoryPoint": {
+        "type": "object",
+        "properties": {
+          "snapshot_date": {
+            "type": "string",
+            "format": "date",
+            "example": "2026-06-15"
+          },
+          "price_amount": {
+            "type": "number",
+            "example": 849
+          },
+          "price_currency": {
+            "type": "string",
+            "example": "USD"
+          },
+          "price_per_night": {
+            "type": "number",
+            "example": 121.29
+          },
+          "nights": {
+            "type": "integer",
+            "example": 7
+          },
+          "captured_at": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-06-15T04:10:00Z"
+          }
+        }
+      },
+      "CruiseHistory": {
+        "type": "object",
+        "properties": {
+          "source": {
+            "type": "string",
+            "example": "cruisemapper"
+          },
+          "source_id": {
+            "type": "string",
+            "example": "msc-world-europa-2026-09-12"
+          },
+          "points": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HistoryPoint"
+            }
+          }
+        }
+      },
+      "PriceChange": {
+        "type": "object",
+        "properties": {
+          "source": {
+            "type": "string",
+            "example": "cruisemapper"
+          },
+          "source_id": {
+            "type": "string",
+            "example": "msc-world-europa-2026-09-12"
+          },
+          "cruise_line": {
+            "type": "string",
+            "example": "MSC Cruises"
+          },
+          "ship_name": {
+            "type": "string",
+            "example": "MSC World Europa"
+          },
+          "departure_date": {
+            "type": "string",
+            "format": "date",
+            "example": "2026-09-12"
+          },
+          "old_price": {
+            "type": "number",
+            "example": 849
+          },
+          "new_price": {
+            "type": "number",
+            "example": 799
+          },
+          "price_currency": {
+            "type": "string",
+            "example": "USD"
+          },
+          "old_date": {
+            "type": "string",
+            "format": "date",
+            "example": "2026-06-15"
+          },
+          "new_date": {
+            "type": "string",
+            "format": "date",
+            "example": "2026-06-28"
+          }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "detail": {
+            "type": "string",
+            "example": "Invalid or missing API key."
+          }
+        }
+      }
+    }
+  }
+}

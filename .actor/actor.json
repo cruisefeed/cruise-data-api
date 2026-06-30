@@ -13,5 +13,6 @@
     "maxMemoryMbytes": 1024,
     "dockerfile": "./Dockerfile",
     "input": "./input_schema.json",
+    "webServerSchema": "./openapi.json",
     "readme": "../README.md"
 }
