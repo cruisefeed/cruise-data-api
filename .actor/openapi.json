@@ -3,22 +3,12 @@
   "info": {
     "title": "CruiseFeed API (Apify Standby)",
     "version": "1.0.0",
-    "description": "Live REST API for normalized cruise inventory - cruise lines, ships, sailing dates, day-by-day itineraries, ports and lead-in pricing - across 60+ lines. Served on the Apify platform in Standby mode; requests are proxied to the CruiseFeed data API. Apify handles authentication automatically, so you can try any endpoint from this page. Billed pay-per-event, per record returned. Full catalogue & managed delivery: https://cruisefeed.io",
-    "termsOfService": "https://cruisefeed.io",
-    "contact": {
-      "name": "CruiseFeed",
-      "url": "https://cruisefeed.io",
-      "email": "support@cruisefeed.io"
-    },
-    "license": {
-      "name": "Proprietary — data licensed per the CruiseFeed subscription terms",
-      "url": "https://cruisefeed.io"
-    }
+    "description": "Live REST API for normalized cruise inventory - cruise lines, ships, sailing dates, day-by-day itineraries, ports and lead-in pricing - across 60+ lines. Served on Apify in Standby mode; Apify handles authentication, so you can try any endpoint from this page. Billed pay-per-event, per record returned. Unofficial - not affiliated with any cruise line; public data only."
   },
   "servers": [
     {
-      "url": "https://vulnv--cruise-data-api.apify.actor",
-      "description": "Apify Standby URL (replaced automatically by Apify)"
+      "url": "https://<username>--cruise-data-api.apify.actor",
+      "description": "Apify Standby URL (set automatically by Apify)"
     }
   ],
   "tags": [

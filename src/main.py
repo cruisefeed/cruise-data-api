@@ -1,18 +1,18 @@
 """CruiseFeed API - Standby Actor.
 
-Exposes the CruiseFeed cruise-data API (https://cruisefeed.io) as an
-always-on REST API on the Apify platform using Actor Standby mode. Instead of
-running a batch job and waiting for a dataset, callers hit this Actor's standby
-URL like a normal HTTP API and get a live JSON/CSV response proxied from
-api.cruisefeed.io - cruise lines, ships, sailing dates, day-by-day itineraries,
-ports of call, lead-in pricing and price history, normalized into one schema
-across 60+ cruise lines.
+Exposes a normalized cruise-data API as an always-on REST API on the Apify
+platform using Actor Standby mode. Instead of running a batch job and waiting
+for a dataset, callers hit this Actor's standby URL like a normal HTTP API and
+get a live JSON/CSV response - cruise lines, ships, sailing dates, day-by-day
+itineraries, ports of call, lead-in pricing and price history, normalized into
+one schema across 60+ cruise lines.
 
-The Actor holds CruiseFeed's API key, so callers don't need one of their own -
-they pay through Apify (pay-per-event, per record returned). The full dataset
-and managed delivery are available at https://cruisefeed.io.
+The Actor holds the upstream data-API key, so callers don't need one of their
+own - they pay through Apify (pay-per-event, per record returned). This is an
+unofficial Actor and is not affiliated with any cruise line; it serves public
+cruise inventory data only.
 
-Endpoints (all proxied 1:1 to api.cruisefeed.io):
+Endpoints (all proxied to the upstream data API):
 
     GET /cruises                              list & filter sailings
     GET /cruises.csv                          same filters, CSV export
@@ -52,8 +52,7 @@ API_BASE = os.getenv("CRUISEFEED_API_BASE", "https://api.cruisefeed.io").strip()
 # which takes precedence.
 ENV_API_KEY = os.getenv("CRUISEFEED_API_KEY", "").strip()
 
-SITE_URL = "https://cruisefeed.io"
-USER_AGENT = "cruise-data-api-actor/1.0 (+https://cruisefeed.io)"
+USER_AGENT = "cruise-data-api-actor/1.0"
 
 # Non-paying Apify users get a small, free sample instead of full pages.
 FREE_TIER_MAX_RESULTS = 5
@@ -99,10 +98,9 @@ def _landing() -> dict:
         "service": "CruiseFeed API (Apify Standby)",
         "description": (
             "Real-time, normalized cruise inventory - lines, ships, sailing dates, "
-            "itineraries, ports and pricing - across 60+ cruise lines. Proxied live "
-            "from api.cruisefeed.io; you pay per record returned via Apify."
+            "itineraries, ports and pricing - across 60+ cruise lines. You pay per "
+            "record returned via Apify pay-per-event."
         ),
-        "website": SITE_URL,
         "usage": "Send a GET request to any endpoint below on this same base URL.",
         "endpoints": {
             "GET /cruises": "List & filter sailings (the workhorse).",
@@ -129,7 +127,7 @@ def _landing() -> dict:
             "/ships?q=world%20europa",
         ],
         "billing": "Pay-per-event: charged per cruise/ship record returned. Lookups and reference lists count as one.",
-        "note": "Need the full catalogue, daily history or managed delivery? See " + SITE_URL,
+        "note": "Unofficial API; public cruise data only. Not affiliated with any cruise line.",
     }
 
 
@@ -268,9 +266,8 @@ async def main() -> None:
         meta_origin = Actor.configuration.meta_origin
         port = Actor.configuration.web_server_port
         Actor.log.info(
-            f"CruiseFeed standby API starting | origin={meta_origin} | port={port} | upstream={API_BASE}"
+            f"CruiseFeed standby API starting | origin={meta_origin} | port={port}"
         )
-        Actor.log.info(f"Full catalogue, history & managed delivery: {SITE_URL}")
 
         _http = httpx.AsyncClient(timeout=60.0)
         try:
