@@ -37,7 +37,7 @@ tags:
   - name: History
     description: Price & availability change tracking.
   - name: Reference
-    description: Public reference lists (no API key required).
+    description: Reference lists (cruise lines, ships, ports). Requires an API key.
 
 paths:
   /cruises:
@@ -165,9 +165,8 @@ paths:
     get:
       tags: [Reference]
       summary: List cruise line names
-      description: Distinct cruise line names in the feed. No API key required.
+      description: Distinct cruise line names in the feed.
       operationId: listCruiseLines
-      security: []
       responses:
         "200":
           description: Cruise line names.
@@ -180,9 +179,8 @@ paths:
     get:
       tags: [Reference]
       summary: List ship names
-      description: Distinct ship names in the feed. No API key required.
+      description: Distinct ship names in the feed.
       operationId: listShips
-      security: []
       responses:
         "200":
           description: Ship names.
@@ -194,9 +192,8 @@ paths:
     get:
       tags: [Reference]
       summary: List departure ports
-      description: Distinct embarkation ports in the feed. No API key required.
+      description: Distinct embarkation ports in the feed.
       operationId: listPorts
-      security: []
       responses:
         "200":
           description: Port names.

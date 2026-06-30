@@ -1,15 +1,15 @@
 #!/usr/bin/env bash
 # CruiseFeed API quickstart (curl). Requires: export CRUISEFEED_API_KEY=...
-# Reference lists are public; everything under /cruises needs the key.
+# Every endpoint requires the key (sent as the x-api-key header).
 set -euo pipefail
 
 BASE="https://api.cruisefeed.io"
 KEY="${CRUISEFEED_API_KEY:-}"
 auth=(-H "x-api-key: ${KEY}")
 
-echo "# Public reference (no key needed)"
-curl -s "$BASE/cruise-lines" | head -c 200; echo
-curl -s "$BASE/ports"        | head -c 200; echo
+echo "# Reference lists (key required)"
+curl -s "${auth[@]}" "$BASE/cruise-lines" | head -c 200; echo
+curl -s "${auth[@]}" "$BASE/ports"        | head -c 200; echo
 
 echo; echo "# List & filter cruises"
 curl -s "${auth[@]}" "$BASE/cruises?region=Caribbean&max_price=1200&min_nights=5&limit=3"

@@ -36,8 +36,8 @@ public cruise inventory only — no personal data.
 
 ## Authentication
 
-All `/cruises*`, `/changes` and history endpoints require an API key, sent as the
-`x-api-key` header. The reference lists (`/cruise-lines`, `/ships`, `/ports`) are public.
+**Every endpoint requires an API key**, sent as the `x-api-key` header — including the
+reference lists (`/cruise-lines`, `/ships`, `/ports`). There are no public data routes.
 
 ```bash
 curl -H "x-api-key: YOUR_API_KEY" "https://api.cruisefeed.io/cruises?limit=1"
@@ -54,9 +54,9 @@ Get a key at **https://cruisefeed.io**.
 | GET | `/cruises/{source}/{source_id}` | ✅ | Get one sailing by natural key |
 | GET | `/cruises/{source}/{source_id}/history` | ✅ | Price & availability history |
 | GET | `/changes` | ✅ | Recent price changes (fare-drop alerts) |
-| GET | `/cruise-lines` | — | Distinct cruise line names |
-| GET | `/ships` | — | Distinct ship names |
-| GET | `/ports` | — | Distinct departure ports |
+| GET | `/cruise-lines` | ✅ | Distinct cruise line names |
+| GET | `/ships` | ✅ | Distinct ship names |
+| GET | `/ports` | ✅ | Distinct departure ports |
 
 Full request/response details are in [`openapi.yaml`](openapi.yaml) — paste it into
 [Swagger Editor](https://editor.swagger.io) or Postman to explore.
