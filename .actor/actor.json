@@ -3,7 +3,7 @@
   "name": "cruise-data-api",
   "title": "CruiseFeed API: Real-Time Cruise Data & Pricing (REST)",
   "description": "Always-on REST API for normalized cruise inventory from 60+ lines (MSC, Royal Caribbean, Carnival, Norwegian, Princess, Disney and more): ships, sailing dates, itineraries, ports of call, lead-in pricing and price history. Query it live on demand - no batch run. Unofficial; public data only.",
-  "version": "1.1",
+  "version": "1.3",
   "buildTag": "latest",
   "usesStandbyMode": true,
   "meta": {

@@ -4,7 +4,7 @@ An always-on REST API for **normalized cruise inventory** – cruise lines, ship
 sailing dates, day-by-day itineraries, ports of call and lead-in pricing –
 across 60+ cruise lines, in one clean schema. It runs on Apify in **Standby
 mode**, so you query it live like an API instead of running a batch job. Every
-record carries a stable natural key (`source` + `source_id`) and the same shape
+record carries a stable opaque `id` and the same shape
 across every line.
 
 It's built for travel-tech use cases – OTAs, cruise-comparison sites, travel
@@ -49,26 +49,25 @@ curl "https://<username>--cruise-data-api.apify.actor/ships/9839419" \
 |--------|------|-------------|
 | GET | `/cruises` | List & filter sailings (the workhorse) |
 | GET | `/cruises.csv` | Same filters, streamed as CSV |
-| GET | `/cruises/{source}/{source_id}` | One sailing, enriched with its `ship` |
-| GET | `/cruises/{source}/{source_id}/history` | Price & availability history |
+| GET | `/cruises/{id}` | One sailing, enriched with its `ship` |
+| GET | `/cruises/{id}/history` | Price & availability history |
 | GET | `/changes` | Recent price changes (fare-drop alerts) |
 | GET | `/ships` | List & filter ships (specs, capacity, build) |
 | GET | `/ships/{ship_id}` | One ship by IMO number |
 | GET | `/cruise-lines` | Distinct cruise line names |
 | GET | `/ports` | Distinct departure ports |
-| GET | `/sources` | Distinct data sources |
-| GET | `/stats` | Catalogue totals by source |
+| GET | `/stats` | Catalogue totals |
 
 Every cruise carries a `fares` array — the full per-cabin-class price breakdown
 (interior/oceanview/balcony/suite …) with availability — alongside the lead-in
-`price_amount`. Add `?include=raw` to embed the unmodified provider payload.
+`price_amount`.
 
 ### Filters for `GET /cruises`
 
-`source` · `cruise_line` · `ship_name` · `embark_port` · `region` (partial) ·
+`cruise_line` · `ship_name` · `embark_port` · `region` (partial) ·
 `departure_from` · `departure_to` · `min_price` · `max_price` · `min_nights` ·
 `max_nights` · `round_trip` · `dedupe` (default true) · `sort` (default
-`departure_date`) · `include` (e.g. `raw`) · `limit` (1–500, default 50) · `offset`.
+`departure_date`) · `limit` (1–500, default 50) · `offset`.
 
 ## Example: list cruises
 
@@ -85,8 +84,7 @@ curl "https://<username>--cruise-data-api.apify.actor/cruises?cruise_line=MSC%20
 {
   "items": [
     {
-      "source": "msc",
-      "source_id": "SX20260912PIRPIR",
+      "id": "cru_4f2a9c1b7e3d5068",
       "cruise_line": "MSC Cruises",
       "ship_name": "MSC World Europa",
       "title": "7-Night Western Mediterranean",
@@ -141,7 +139,7 @@ curl "https://<username>--cruise-data-api.apify.actor/ships/9839419" \
   -H "Authorization: Bearer $APIFY_TOKEN"
 ```
 
-The single-cruise endpoint (`GET /cruises/{source}/{source_id}`) returns a `ship`
+The single-cruise endpoint (`GET /cruises/{id}`) returns a `ship`
 object inline, so you get the vessel's specs alongside the sailing in one call.
 
 ## Billing
@@ -162,7 +160,7 @@ current rates.
 
 | Field | Type | Notes |
 |-------|------|-------|
-| `source`, `source_id` | string | Natural key (unique per sailing) |
+| `id` | string | Opaque, source-agnostic id (unique per sailing) |
 | `cruise_line`, `ship_name`, `title` | string | Normalized names |
 | `departure_date`, `return_date` | date | `YYYY-MM-DD` (may be null for product-level sailings) |
 | `duration_days`, `nights` | integer | |
@@ -188,7 +186,7 @@ gross tonnage, length/beam, decks, cabins, builder, class, sister ships and flag
 
 **How fresh is the data?** Inventory and prices are refreshed regularly; each
 record includes a `scraped_at` timestamp, and price history is available for
-change tracking via `/changes` and `/cruises/{source}/{source_id}/history`.
+change tracking via `/changes` and `/cruises/{id}/history`.
 
 **What formats?** JSON for every endpoint, plus CSV via `/cruises.csv`.
 

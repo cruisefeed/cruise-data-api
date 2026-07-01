@@ -16,15 +16,14 @@ Endpoints (all proxied to the upstream data API):
 
     GET /cruises                              list & filter sailings
     GET /cruises.csv                          same filters, CSV export
-    GET /cruises/{source}/{source_id}         one sailing (+ matched ship)
-    GET /cruises/{source}/{source_id}/history price history for a sailing
+    GET /cruises/{id}                         one sailing (+ matched ship)
+    GET /cruises/{id}/history                 price history for a sailing
     GET /changes                              recent price changes
     GET /ships                                list & filter ships (specs)
     GET /ships/{ship_id}                      one ship by IMO
     GET /cruise-lines                         distinct cruise line names
     GET /ports                                distinct departure ports
-    GET /sources                              distinct data sources
-    GET /stats                                catalogue totals by source
+    GET /stats                                catalogue totals
 
 Each route is proxied to the versioned upstream API (e.g. /cruises -> /v1/cruises).
 
@@ -58,7 +57,7 @@ API_VERSION_PREFIX = "/v1"
 # which takes precedence.
 ENV_API_KEY = os.getenv("CRUISEFEED_API_KEY", "").strip()
 
-USER_AGENT = "cruise-data-api-actor/1.1"
+USER_AGENT = "cruise-data-api-actor/1.3"
 
 # Non-paying Apify users get a small, free sample instead of full pages.
 FREE_TIER_MAX_RESULTS = 5
@@ -75,12 +74,11 @@ PROXY_PREFIXES = (
     "/ships",
     "/cruise-lines",
     "/ports",
-    "/sources",
     "/stats",
 )
 
 # Reference/facet lists bill as a single lookup, not one charge per name returned.
-_SINGLE_CHARGE_PATHS = ("/cruise-lines", "/ports", "/sources")
+_SINGLE_CHARGE_PATHS = ("/cruise-lines", "/ports")
 
 # Endpoints that accept a `limit` page-size param (where the free cap applies).
 LIMIT_ENDPOINTS = ("/cruises", "/cruises.csv", "/ships", "/changes")
@@ -126,21 +124,20 @@ def _landing() -> dict:
         "endpoints": {
             "GET /cruises": "List & filter sailings (the workhorse).",
             "GET /cruises.csv": "Same filters, streamed as CSV.",
-            "GET /cruises/{source}/{source_id}": "One sailing, enriched with its ship.",
-            "GET /cruises/{source}/{source_id}/history": "Price history for a sailing.",
+            "GET /cruises/{id}": "One sailing, enriched with its ship.",
+            "GET /cruises/{id}/history": "Price history for a sailing.",
             "GET /changes": "Recent price changes (fare-drop alerts).",
             "GET /ships": "List & filter ships (specs, capacity, build).",
             "GET /ships/{ship_id}": "One ship by IMO number.",
             "GET /cruise-lines": "Distinct cruise line names.",
             "GET /ports": "Distinct departure ports.",
-            "GET /sources": "Distinct data sources.",
-            "GET /stats": "Catalogue totals by source.",
+            "GET /stats": "Catalogue totals.",
         },
         "filters_for_cruises": [
-            "source", "cruise_line", "ship_name", "embark_port", "region",
+            "cruise_line", "ship_name", "embark_port", "region",
             "departure_from", "departure_to", "min_price", "max_price",
             "min_nights", "max_nights", "round_trip", "dedupe", "sort",
-            "include", "limit", "offset",
+            "limit", "offset",
         ],
         "examples": [
             "/cruises?region=Caribbean&max_price=1200&limit=10",
