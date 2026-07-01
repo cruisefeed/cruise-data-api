@@ -10,8 +10,7 @@ info:
 
     Built for travel agencies, OTAs, cruise-comparison sites and data
     aggregators who would rather consume one normalized feed than build and
-    maintain scrapers. Every record has a stable natural key (`source` +
-    `source_id`) and one schema across all cruise lines.
+    maintain scrapers. Every record has a stable opaque `id` and one schema across all cruise lines.
 
 
     Get an API key and free sample at https://cruisefeed.io.
@@ -51,7 +50,6 @@ paths:
         combine any of the filters below. Results are deduplicated by default.
       operationId: listCruises
       parameters:
-        - { name: source, in: query, schema: { type: string }, description: "Source/site key, e.g. cruisemapper." }
         - { name: cruise_line, in: query, schema: { type: string }, description: "Exact cruise line name (see GET /cruise-lines)." }
         - { name: ship_name, in: query, schema: { type: string }, description: "Exact ship name." }
         - { name: embark_port, in: query, schema: { type: string }, description: "Departure (embarkation) port." }
@@ -84,7 +82,6 @@ paths:
       description: Same filters as `GET /cruises`, streamed as a CSV file for spreadsheets and warehouse loads.
       operationId: exportCruisesCsv
       parameters:
-        - { name: source, in: query, schema: { type: string } }
         - { name: cruise_line, in: query, schema: { type: string } }
         - { name: ship_name, in: query, schema: { type: string } }
         - { name: embark_port, in: query, schema: { type: string } }
@@ -106,15 +103,14 @@ paths:
         "401":
           $ref: "#/components/responses/Unauthorized"
 
-  /cruises/{source}/{source_id}:
+  /cruises/{id}:
     get:
       tags: [Cruises]
       summary: Get a single cruise
-      description: Fetch one sailing by its natural key (`source` + `source_id`), returned on every record.
+      description: Fetch one sailing by its opaque id (returned on every record).
       operationId: getCruise
       parameters:
-        - { name: source, in: path, required: true, schema: { type: string }, description: "Source/site key, e.g. cruisemapper." }
-        - { name: source_id, in: path, required: true, schema: { type: string }, description: "The source's id for the sailing." }
+        - { name: id, in: path, required: true, schema: { type: string }, description: "The opaque cruise id." }
         - { name: include, in: query, schema: { type: string }, description: "Comma-separated extras to embed. Supports: raw (the full provider payload)." }
       responses:
         "200":
@@ -125,15 +121,14 @@ paths:
         "401": { $ref: "#/components/responses/Unauthorized" }
         "404": { $ref: "#/components/responses/NotFound" }
 
-  /cruises/{source}/{source_id}/history:
+  /cruises/{id}/history:
     get:
       tags: [History]
       summary: Price & availability history
       description: Point-in-time price snapshots for a sailing, oldest to newest — track how a fare has moved.
       operationId: getCruiseHistory
       parameters:
-        - { name: source, in: path, required: true, schema: { type: string } }
-        - { name: source_id, in: path, required: true, schema: { type: string } }
+        - { name: id, in: path, required: true, schema: { type: string }, description: "The opaque cruise id." }
       responses:
         "200":
           description: Price history for the sailing.
@@ -151,7 +146,6 @@ paths:
       operationId: listChanges
       parameters:
         - { name: since, in: query, schema: { type: string, format: date }, description: "Only changes on/after this date (YYYY-MM-DD)." }
-        - { name: source, in: query, schema: { type: string }, description: "Filter by source/site key." }
         - { name: cruise_line, in: query, schema: { type: string }, description: "Filter by cruise line." }
         - { name: limit, in: query, schema: { type: integer, default: 100 } }
         - { name: offset, in: query, schema: { type: integer, default: 0 } }
@@ -230,20 +224,6 @@ paths:
             application/json:
               schema: { $ref: "#/components/schemas/ValueList" }
 
-  /sources:
-    get:
-      tags: [Reference]
-      summary: List data sources
-      description: Distinct source/site keys the feed is built from.
-      operationId: listSources
-      responses:
-        "200":
-          description: Source keys.
-          content:
-            application/json:
-              schema: { $ref: "#/components/schemas/ValueList" }
-              example: { items: ["carnival", "cruisemapper", "msc", "ncl", "princess", "royalcaribbean"], total: 6 }
-
 components:
   securitySchemes:
     ApiKeyAuth:
@@ -271,8 +251,7 @@ components:
       type: object
       description: A single sailing, normalized across all cruise lines.
       properties:
-        source: { type: string, example: cruisemapper, description: "Source/site key." }
-        source_id: { type: string, example: msc-world-europa-2026-09-12, description: "Natural key within the source." }
+        id: { type: string, example: cru_9f3a2b71c4d5e6f7, description: "Opaque, source-agnostic id; the key for the detail and history endpoints." }
         cruise_line: { type: string, example: MSC Cruises }
         ship_name: { type: string, example: MSC World Europa }
         title: { type: string, example: 7-Night Western Mediterranean }
@@ -407,8 +386,7 @@ components:
     CruiseHistory:
       type: object
       properties:
-        source: { type: string, example: cruisemapper }
-        source_id: { type: string, example: msc-world-europa-2026-09-12 }
+        id: { type: string, example: cru_9f3a2b71c4d5e6f7 }
         points:
           type: array
           items: { $ref: "#/components/schemas/HistoryPoint" }
@@ -416,8 +394,7 @@ components:
     PriceChange:
       type: object
       properties:
-        source: { type: string, example: cruisemapper }
-        source_id: { type: string, example: msc-world-europa-2026-09-12 }
+        id: { type: string, example: cru_9f3a2b71c4d5e6f7 }
         cruise_line: { type: string, example: MSC Cruises }
         ship_name: { type: string, example: MSC World Europa }
         departure_date: { type: string, format: date, example: "2026-09-12" }

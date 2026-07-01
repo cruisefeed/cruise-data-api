@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.2
+
+- Providers are abstracted away. Sailings are addressed by an opaque, stable `id`
+  (`/cruises/{id}`, `/cruises/{id}/history`) and responses no longer expose
+  `source`/`source_id`. Removed `/sources` and the `source` filter; `/stats`
+  reports catalogue totals (no per-source breakdown).
+
 ## 1.1
 
 - Add `/sources` and expose the full per-cabin-class `fares` breakdown on every
