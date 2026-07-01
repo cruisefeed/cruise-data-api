@@ -28,7 +28,7 @@ servers:
     description: Production
 
 security:
-  - ApiKeyAuth: []
+  - BearerAuth: []
 
 tags:
   - name: Cruises
@@ -224,11 +224,10 @@ paths:
 
 components:
   securitySchemes:
-    ApiKeyAuth:
-      type: apiKey
-      in: header
-      name: x-api-key
-      description: Your CruiseFeed API key. Get one at https://cruisefeed.io.
+    BearerAuth:
+      type: http
+      scheme: bearer
+      description: Your CruiseFeed API key as a Bearer token. Get one at https://cruisefeed.io.
 
   responses:
     Unauthorized:
@@ -297,6 +296,7 @@ components:
         seq: { type: integer, example: 2 }
         port: { type: string, example: Marseille }
         port_code: { type: string, nullable: true, example: MRS }
+        date_raw: { type: string, nullable: true, example: "13 Sep" }
         arrive: { type: string, nullable: true }
         depart: { type: string, nullable: true }
         is_embark: { type: boolean, example: false }
@@ -314,10 +314,9 @@ components:
 
     Ship:
       type: object
-      description: Vessel metadata for one ship.
+      description: Vessel metadata for one ship (data provider abstracted away).
       properties:
-        source: { type: string, example: cruisemapper }
-        source_id: { type: string, example: "9187796", description: "IMO number (natural key)." }
+        source_id: { type: string, example: "9187796", description: "The vessel's public id (IMO number, or a slug when IMO is absent)." }
         imo_number: { type: string, example: "9187796" }
         mmsi_number: { type: string, nullable: true }
         ship_name: { type: string, example: MSC World Europa }
