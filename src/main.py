@@ -104,10 +104,13 @@ def _is_paying_user() -> bool:
 
 
 def _caller_key(request: Request) -> str:
-    """A caller-supplied CruiseFeed key, from Authorization: Bearer or x-api-key."""
-    auth = request.headers.get("authorization", "").strip()
-    if auth[:7].lower() == "bearer ":
-        return auth[7:].strip()
+    """A caller-supplied CruiseFeed key from the `x-api-key` header.
+
+    We deliberately do NOT read `Authorization` here: on Apify Standby the caller
+    authenticates to the platform with their Apify token in that header, so reading
+    it would mistake the Apify token for a CruiseFeed key. The actor always sends
+    the resolved key upstream as `Authorization: Bearer` regardless.
+    """
     return request.headers.get("x-api-key", "").strip()
 
 
