@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.1
+
+- Add `/sources` and expose the full per-cabin-class `fares` breakdown on every
+  cruise, plus `?include=raw` to embed the unmodified provider payload.
+- Facet lists (`/cruise-lines`, `/ports`, `/sources`) and `/changes` are now
+  enveloped as `{ items, total, … }`; errors use `{ "error": { code, message } }`.
+- Proxies the versioned upstream API (`/v1`) and authenticates with
+  `Authorization: Bearer`. Callers may still send their own key via
+  `Authorization: Bearer` or `x-api-key`.
+
 ## 1.0
 
 - First release. CruiseFeed API as an Apify **Standby** Actor: an always-on REST

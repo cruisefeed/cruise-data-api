@@ -2,7 +2,7 @@
   "openapi": "3.0.3",
   "info": {
     "title": "CruiseFeed API (Apify Standby)",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "description": "Live REST API for normalized cruise inventory - cruise lines, ships, sailing dates, day-by-day itineraries, ports and lead-in pricing - across 60+ lines. Served on Apify in Standby mode; Apify handles authentication, so you can try any endpoint from this page. Billed pay-per-event, per record returned. Unofficial - not affiliated with any cruise line; public data only."
   },
   "servers": [
@@ -36,7 +36,7 @@
           "Cruises"
         ],
         "summary": "List & filter cruises",
-        "description": "Paginated, filterable list of sailings. The workhorse endpoint — combine any of the filters below. Results are deduplicated by default.\n",
+        "description": "Paginated, filterable list of sailings. The workhorse endpoint â€” combine any of the filters below. Results are deduplicated by default.\n",
         "operationId": "listCruises",
         "parameters": [
           {
@@ -161,10 +161,10 @@
             "schema": {
               "type": "integer",
               "minimum": 1,
-              "maximum": 200,
+              "maximum": 500,
               "default": 50
             },
-            "description": "Page size, 1–200."
+            "description": "Page size, 1–500."
           },
           {
             "name": "offset",
@@ -174,6 +174,14 @@
               "default": 0
             },
             "description": "Rows to skip."
+          },
+          {
+            "name": "include",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Comma-separated extras to embed. Supports: raw (the full provider payload)."
           }
         ],
         "responses": {
@@ -334,6 +342,14 @@
               "type": "string"
             },
             "description": "The source's id for the sailing."
+          },
+          {
+            "name": "include",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Comma-separated extras to embed. Supports: raw (the full provider payload)."
           }
         ],
         "responses": {
@@ -359,7 +375,7 @@
           "History"
         ],
         "summary": "Price & availability history",
-        "description": "Point-in-time price snapshots for a sailing, oldest to newest — track how a fare has moved.",
+        "description": "Point-in-time price snapshots for a sailing, oldest to newest â€” track how a fare has moved.",
         "operationId": "getCruiseHistory",
         "parameters": [
           {
@@ -402,7 +418,7 @@
           "History"
         ],
         "summary": "Recent price changes",
-        "description": "Sailings whose price changed between the two most recent snapshots — ideal for fare-drop alerts.",
+        "description": "Sailings whose price changed between the two most recent snapshots â€” ideal for fare-drop alerts.",
         "operationId": "listChanges",
         "parameters": [
           {
@@ -453,10 +469,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/PriceChange"
-                  }
+                  "$ref": "#/components/schemas/ChangePage"
                 }
               }
             }
@@ -470,7 +483,7 @@
           "Ships"
         ],
         "summary": "List & filter ships",
-        "description": "Vessel metadata — capacity, gross tonnage, length/beam, decks, cabins, builder, class, sister ships, flag and more — for 1,500+ ships, sourced from cruisemapper.\n",
+        "description": "Vessel metadata â€” capacity, gross tonnage, length/beam, decks, cabins, builder, class, sister ships, flag and more â€” for 1,500+ ships, sourced from cruisemapper.\n",
         "operationId": "listShips",
         "parameters": [
           {
@@ -536,7 +549,7 @@
           "Ships"
         ],
         "summary": "Get a single ship",
-        "description": "One vessel by its source_id — the IMO number (or a URL slug when IMO is absent).",
+        "description": "One vessel by its source_id â€” the IMO number (or a URL slug when IMO is absent).",
         "operationId": "getShip",
         "parameters": [
           {
@@ -580,10 +593,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  }
+                  "$ref": "#/components/schemas/ValueList"
                 },
                 "example": [
                   "AIDA Cruises",
@@ -612,10 +622,29 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  }
+                  "$ref": "#/components/schemas/ValueList"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/sources": {
+      "get": {
+        "tags": [
+          "Reference"
+        ],
+        "summary": "List data sources",
+        "description": "Distinct source/site keys the feed is built from.",
+        "operationId": "listSources",
+        "responses": {
+          "200": {
+            "description": "Source keys.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValueList"
                 }
               }
             }
@@ -755,7 +784,8 @@
           },
           "price_amount": {
             "type": "number",
-            "example": 799
+            "example": 799,
+            "description": "Lead-in (lowest) fare; see `fares` for the full per-cabin breakdown."
           },
           "price_currency": {
             "type": "string",
@@ -764,6 +794,13 @@
           "price_per_night": {
             "type": "number",
             "example": 114.14
+          },
+          "fares": {
+            "type": "array",
+            "description": "Per-cabin-class fare breakdown; empty when the source quotes only a single \"from\" price.",
+            "items": {
+              "$ref": "#/components/schemas/Fare"
+            }
           },
           "itinerary": {
             "type": "array",
@@ -775,6 +812,11 @@
             "type": "string",
             "format": "date-time",
             "example": "2026-06-28T04:12:00Z"
+          },
+          "raw": {
+            "type": "object",
+            "nullable": true,
+            "description": "The unmodified provider payload. Only present when the request passes include=raw."
           }
         }
       },
@@ -789,9 +831,22 @@
             "type": "string",
             "example": "Marseille"
           },
+          "port_code": {
+            "type": "string",
+            "nullable": true,
+            "example": "MRS"
+          },
           "date_raw": {
             "type": "string",
             "example": "13 Sep"
+          },
+          "arrive": {
+            "type": "string",
+            "nullable": true
+          },
+          "depart": {
+            "type": "string",
+            "nullable": true
           },
           "is_embark": {
             "type": "boolean",
@@ -1103,10 +1158,91 @@
       },
       "Error": {
         "type": "object",
+        "description": "Uniform error envelope.",
         "properties": {
-          "detail": {
+          "error": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string",
+                "example": "unauthorized"
+              },
+              "message": {
+                "type": "string",
+                "example": "Invalid or missing API key."
+              }
+            }
+          }
+        }
+      },
+      "Fare": {
+        "type": "object",
+        "description": "One cabin-class fare for a sailing.",
+        "properties": {
+          "cabin_class": {
             "type": "string",
-            "example": "Invalid or missing API key."
+            "example": "Balcony"
+          },
+          "cabin_code": {
+            "type": "string",
+            "nullable": true,
+            "example": "BB"
+          },
+          "price_amount": {
+            "type": "number",
+            "example": 1149
+          },
+          "price_currency": {
+            "type": "string",
+            "example": "USD"
+          },
+          "price_per_night": {
+            "type": "number",
+            "example": 164.14
+          },
+          "available": {
+            "type": "boolean",
+            "nullable": true,
+            "example": true
+          }
+        }
+      },
+      "ValueList": {
+        "type": "object",
+        "description": "Envelope for reference/facet endpoints.",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "example": 6
+          }
+        }
+      },
+      "ChangePage": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PriceChange"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "example": 42
+          },
+          "limit": {
+            "type": "integer",
+            "example": 100
+          },
+          "offset": {
+            "type": "integer",
+            "example": 0
           }
         }
       }
