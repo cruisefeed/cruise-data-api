@@ -23,7 +23,10 @@ Endpoints (all proxied to the upstream data API):
     GET /ships/{ship_id}                      one ship by IMO
     GET /cruise-lines                         distinct cruise line names
     GET /ports                                distinct departure ports
+    GET /sources                              distinct data sources
     GET /stats                                catalogue totals by source
+
+Each route is proxied to the versioned upstream API (e.g. /cruises -> /v1/cruises).
 
 Plus operational routes served locally (never billed):
 
@@ -46,13 +49,16 @@ from fastapi import FastAPI, Request, Response
 # CruiseFeed data API. Overridable for self-hosted mirrors / local testing.
 API_BASE = os.getenv("CRUISEFEED_API_BASE", "https://api.cruisefeed.io").strip().rstrip("/")
 
+# The upstream data API is versioned; every proxied route is served under /v1.
+API_VERSION_PREFIX = "/v1"
+
 # CruiseFeed API key. Baked onto the Actor version as a secret env var at deploy
 # time so callers never need their own. A caller may still send their own
 # `x-api-key` header (e.g. a cruisefeed.io subscriber using their entitlement),
 # which takes precedence.
 ENV_API_KEY = os.getenv("CRUISEFEED_API_KEY", "").strip()
 
-USER_AGENT = "cruise-data-api-actor/1.0"
+USER_AGENT = "cruise-data-api-actor/1.1"
 
 # Non-paying Apify users get a small, free sample instead of full pages.
 FREE_TIER_MAX_RESULTS = 5
@@ -69,8 +75,12 @@ PROXY_PREFIXES = (
     "/ships",
     "/cruise-lines",
     "/ports",
+    "/sources",
     "/stats",
 )
+
+# Reference/facet lists bill as a single lookup, not one charge per name returned.
+_SINGLE_CHARGE_PATHS = ("/cruise-lines", "/ports", "/sources")
 
 # Endpoints that accept a `limit` page-size param (where the free cap applies).
 LIMIT_ENDPOINTS = ("/cruises", "/cruises.csv", "/ships", "/changes")
@@ -93,6 +103,14 @@ def _is_paying_user() -> bool:
     return os.getenv("APIFY_USER_IS_PAYING", "").strip() == "1"
 
 
+def _caller_key(request: Request) -> str:
+    """A caller-supplied CruiseFeed key, from Authorization: Bearer or x-api-key."""
+    auth = request.headers.get("authorization", "").strip()
+    if auth[:7].lower() == "bearer ":
+        return auth[7:].strip()
+    return request.headers.get("x-api-key", "").strip()
+
+
 def _landing() -> dict:
     return {
         "service": "CruiseFeed API (Apify Standby)",
@@ -112,13 +130,14 @@ def _landing() -> dict:
             "GET /ships/{ship_id}": "One ship by IMO number.",
             "GET /cruise-lines": "Distinct cruise line names.",
             "GET /ports": "Distinct departure ports.",
+            "GET /sources": "Distinct data sources.",
             "GET /stats": "Catalogue totals by source.",
         },
         "filters_for_cruises": [
             "source", "cruise_line", "ship_name", "embark_port", "region",
             "departure_from", "departure_to", "min_price", "max_price",
             "min_nights", "max_nights", "round_trip", "dedupe", "sort",
-            "limit", "offset",
+            "include", "limit", "offset",
         ],
         "examples": [
             "/cruises?region=Caribbean&max_price=1200&limit=10",
@@ -147,12 +166,12 @@ def _billable_count(path: str, ctype: str, body: bytes) -> int:
         return 1
 
     if isinstance(data, dict) and isinstance(data.get("items"), list):
-        return len(data["items"])  # /cruises, /ships
-    if isinstance(data, list):
-        # Reference name lists are a single lookup, not one charge per name.
-        if p.endswith("/cruise-lines") or p.endswith("/ports"):
+        # Facet/reference lists (also enveloped now) are a single lookup.
+        if any(p.endswith(s) for s in _SINGLE_CHARGE_PATHS):
             return 1
-        return len(data)  # /changes -> array of change records
+        return len(data["items"])  # /cruises, /ships, /changes
+    if isinstance(data, list):
+        return len(data)  # defensive: any un-enveloped array
     return 1  # single object: one cruise / ship / history / stats
 
 
@@ -212,20 +231,23 @@ async def proxy(path: str, request: Request) -> Response:
     assert _http is not None
     params = _clamp_free_tier(full_path, list(request.query_params.multi_items()))
 
-    # Caller may supply their own CruiseFeed key; otherwise use the baked-in one.
-    caller_key = request.headers.get("x-api-key", "").strip()
+    # Caller may supply their own CruiseFeed key (via Authorization: Bearer or the
+    # legacy x-api-key header); otherwise use the baked-in one.
+    caller_key = _caller_key(request)
     headers = {
         "Accept": "text/csv" if full_path.endswith(".csv") else "application/json",
         "User-Agent": USER_AGENT,
     }
     key = caller_key or ENV_API_KEY
     if key:
-        headers["X-API-Key"] = key
+        headers["Authorization"] = f"Bearer {key}"
 
+    # The upstream API is versioned: /cruises -> /v1/cruises.
+    upstream_url = f"{API_BASE}{API_VERSION_PREFIX}{full_path}"
     try:
-        upstream = await _http.get(f"{API_BASE}{full_path}", params=params, headers=headers)
+        upstream = await _http.get(upstream_url, params=params, headers=headers)
     except httpx.HTTPError as exc:
-        Actor.log.warning(f"upstream request failed for {full_path}: {exc}")
+        Actor.log.warning(f"upstream request failed for {upstream_url}: {exc}")
         return Response(
             content=json.dumps({"detail": "Upstream CruiseFeed API is unavailable. Please retry."}),
             status_code=502,
