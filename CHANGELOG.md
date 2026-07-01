@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.3
+
+- Removed `?include=raw` and the `raw` field. The raw provider payload is archived
+  off-database (S3) only; the API serves the normalized fields (including the full
+  per-cabin `fares` breakdown).
+
 ## 1.2
 
 - Providers are abstracted away. Sailings are addressed by an opaque, stable `id`

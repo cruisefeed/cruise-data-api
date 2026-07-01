@@ -63,7 +63,6 @@ paths:
         - { name: round_trip, in: query, schema: { type: boolean }, description: "Only round-trip (true) or one-way (false)." }
         - { name: dedupe, in: query, schema: { type: boolean, default: true }, description: "Collapse duplicate sailings. Default true." }
         - { name: sort, in: query, schema: { type: string, default: departure_date }, description: "Sort field. Default departure_date." }
-        - { name: include, in: query, schema: { type: string }, description: "Comma-separated extras to embed. Supports: raw (the full provider payload)." }
         - { name: limit, in: query, schema: { type: integer, minimum: 1, maximum: 500, default: 50 }, description: "Page size, 1–500." }
         - { name: offset, in: query, schema: { type: integer, default: 0 }, description: "Rows to skip." }
       responses:
@@ -111,7 +110,6 @@ paths:
       operationId: getCruise
       parameters:
         - { name: id, in: path, required: true, schema: { type: string }, description: "The opaque cruise id." }
-        - { name: include, in: query, schema: { type: string }, description: "Comma-separated extras to embed. Supports: raw (the full provider payload)." }
       responses:
         "200":
           description: The sailing, enriched with its matched ship.
@@ -274,10 +272,6 @@ components:
           type: array
           items: { $ref: "#/components/schemas/ItineraryStop" }
         scraped_at: { type: string, format: date-time, example: "2026-06-28T04:12:00Z" }
-        raw:
-          type: object
-          nullable: true
-          description: The unmodified provider payload. Only present when the request passes `include=raw`.
 
     ValueList:
       type: object

@@ -60,14 +60,14 @@ curl "https://<username>--cruise-data-api.apify.actor/ships/9839419" \
 
 Every cruise carries a `fares` array — the full per-cabin-class price breakdown
 (interior/oceanview/balcony/suite …) with availability — alongside the lead-in
-`price_amount`. Add `?include=raw` to embed the unmodified provider payload.
+`price_amount`.
 
 ### Filters for `GET /cruises`
 
 `cruise_line` · `ship_name` · `embark_port` · `region` (partial) ·
 `departure_from` · `departure_to` · `min_price` · `max_price` · `min_nights` ·
 `max_nights` · `round_trip` · `dedupe` (default true) · `sort` (default
-`departure_date`) · `include` (e.g. `raw`) · `limit` (1–500, default 50) · `offset`.
+`departure_date`) · `limit` (1–500, default 50) · `offset`.
 
 ## Example: list cruises
 

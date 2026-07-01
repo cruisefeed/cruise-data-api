@@ -57,7 +57,7 @@ API_VERSION_PREFIX = "/v1"
 # which takes precedence.
 ENV_API_KEY = os.getenv("CRUISEFEED_API_KEY", "").strip()
 
-USER_AGENT = "cruise-data-api-actor/1.2"
+USER_AGENT = "cruise-data-api-actor/1.3"
 
 # Non-paying Apify users get a small, free sample instead of full pages.
 FREE_TIER_MAX_RESULTS = 5
@@ -137,7 +137,7 @@ def _landing() -> dict:
             "cruise_line", "ship_name", "embark_port", "region",
             "departure_from", "departure_to", "min_price", "max_price",
             "min_nights", "max_nights", "round_trip", "dedupe", "sort",
-            "include", "limit", "offset",
+            "limit", "offset",
         ],
         "examples": [
             "/cruises?region=Caribbean&max_price=1200&limit=10",
