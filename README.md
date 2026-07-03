@@ -58,9 +58,18 @@ curl "https://<username>--cruise-data-api.apify.actor/ships/9839419" \
 | GET | `/ports` | Distinct departure ports |
 | GET | `/stats` | Catalogue totals |
 
-Every cruise carries a `fares` array — the full per-cabin-class price breakdown
-(interior/oceanview/balcony/suite …) with availability — alongside the lead-in
-`price_amount`.
+Each cruise carries a lead-in `price_amount`, plus a `fares` array that holds the
+per-cabin-class breakdown **when the source publishes more than one cabin fare** —
+it's empty when the line quotes only a single "from" price.
+
+### Machine-readable spec & Postman
+
+- **OpenAPI:** [`openapi.yaml`](openapi.yaml) — kept in lock-step with the live API.
+- **Postman:** [`cruisefeed.postman_collection.json`](cruisefeed.postman_collection.json) —
+  import it, set the `apiKey` variable, and every request is pre-wired. It targets the
+  **direct hosted API** at `https://api.cruisefeed.io` (auth: `Authorization: Bearer <key>`),
+  which is the same data as this Actor via a different front door.
+- **Interactive docs:** https://api.cruisefeed.io/docs
 
 ### Filters for `GET /cruises`
 

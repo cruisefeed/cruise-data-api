@@ -1,0 +1,601 @@
+{
+  "info": {
+    "_postman_id": "c0a5f1e2-4b3d-4e6a-9c11-cruisefeed0001",
+    "name": "CruiseFeed API",
+    "description": "CruiseFeed delivers normalized cruise inventory (lines, ships, sailing dates, itineraries, ports and lead-in pricing) as a clean JSON/CSV REST API. Set the collection variable apiKey to your CruiseFeed key; every request except GET /healthz sends it as Authorization: Bearer {{apiKey}}. Base URL is https://api.cruisefeed.io and all data endpoints are versioned under /v1.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Health check",
+      "request": {
+        "auth": {
+          "type": "noauth"
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "https://api.cruisefeed.io/healthz",
+          "protocol": "https",
+          "host": [
+            "api",
+            "cruisefeed",
+            "io"
+          ],
+          "path": [
+            "healthz"
+          ]
+        },
+        "description": "Liveness probe and the only unauthenticated endpoint. Returns 200 with {\"status\":\"ok\"} when the API is up. No API key required."
+      },
+      "response": []
+    },
+    {
+      "name": "List & filter cruises",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{apiKey}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "https://api.cruisefeed.io/v1/cruises?dedupe=true&sort=departure_date&limit=50&offset=0",
+          "protocol": "https",
+          "host": [
+            "api",
+            "cruisefeed",
+            "io"
+          ],
+          "path": [
+            "v1",
+            "cruises"
+          ],
+          "query": [
+            {
+              "key": "cruise_line",
+              "value": "",
+              "description": "[string]",
+              "disabled": true
+            },
+            {
+              "key": "ship_name",
+              "value": "",
+              "description": "[string]",
+              "disabled": true
+            },
+            {
+              "key": "embark_port",
+              "value": "",
+              "description": "[string] Substring match on the embarkation port.",
+              "disabled": true
+            },
+            {
+              "key": "region",
+              "value": "",
+              "description": "[string] Substring match on the region.",
+              "disabled": true
+            },
+            {
+              "key": "departure_from",
+              "value": "",
+              "description": "[string]",
+              "disabled": true
+            },
+            {
+              "key": "departure_to",
+              "value": "",
+              "description": "[string]",
+              "disabled": true
+            },
+            {
+              "key": "min_price",
+              "value": "",
+              "description": "[number]",
+              "disabled": true
+            },
+            {
+              "key": "max_price",
+              "value": "",
+              "description": "[number]",
+              "disabled": true
+            },
+            {
+              "key": "min_nights",
+              "value": "",
+              "description": "[integer]",
+              "disabled": true
+            },
+            {
+              "key": "max_nights",
+              "value": "",
+              "description": "[integer]",
+              "disabled": true
+            },
+            {
+              "key": "round_trip",
+              "value": "",
+              "description": "[boolean]",
+              "disabled": true
+            },
+            {
+              "key": "dedupe",
+              "value": "true",
+              "description": "[boolean] Collapse the same sailing across sources to one row (first-party source wins)"
+            },
+            {
+              "key": "sort",
+              "value": "departure_date",
+              "description": "[string] One of: departure_date, -departure_date, price, -price"
+            },
+            {
+              "key": "limit",
+              "value": "50",
+              "description": "[integer] Max rows to return."
+            },
+            {
+              "key": "offset",
+              "value": "0",
+              "description": "[integer] Rows to skip."
+            }
+          ]
+        },
+        "description": "List and filter sailings normalized across every cruise line. Combine any query filters below; results are deduplicated by default and support sorting and pagination."
+      },
+      "response": []
+    },
+    {
+      "name": "Export cruises as CSV",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{apiKey}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "https://api.cruisefeed.io/v1/cruises.csv?dedupe=true",
+          "protocol": "https",
+          "host": [
+            "api",
+            "cruisefeed",
+            "io"
+          ],
+          "path": [
+            "v1",
+            "cruises.csv"
+          ],
+          "query": [
+            {
+              "key": "cruise_line",
+              "value": "",
+              "description": "[string]",
+              "disabled": true
+            },
+            {
+              "key": "ship_name",
+              "value": "",
+              "description": "[string]",
+              "disabled": true
+            },
+            {
+              "key": "embark_port",
+              "value": "",
+              "description": "[string]",
+              "disabled": true
+            },
+            {
+              "key": "region",
+              "value": "",
+              "description": "[string]",
+              "disabled": true
+            },
+            {
+              "key": "departure_from",
+              "value": "",
+              "description": "[string]",
+              "disabled": true
+            },
+            {
+              "key": "departure_to",
+              "value": "",
+              "description": "[string]",
+              "disabled": true
+            },
+            {
+              "key": "min_price",
+              "value": "",
+              "description": "[number]",
+              "disabled": true
+            },
+            {
+              "key": "max_price",
+              "value": "",
+              "description": "[number]",
+              "disabled": true
+            },
+            {
+              "key": "min_nights",
+              "value": "",
+              "description": "[integer]",
+              "disabled": true
+            },
+            {
+              "key": "max_nights",
+              "value": "",
+              "description": "[integer]",
+              "disabled": true
+            },
+            {
+              "key": "round_trip",
+              "value": "",
+              "description": "[boolean]",
+              "disabled": true
+            },
+            {
+              "key": "dedupe",
+              "value": "true",
+              "description": "[boolean] Collapse the same sailing to one row"
+            }
+          ]
+        },
+        "description": "Identical filters to GET /v1/cruises, streamed as a CSV file for spreadsheets and data-warehouse loads instead of JSON."
+      },
+      "response": []
+    },
+    {
+      "name": "Get a cruise by id",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{apiKey}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "https://api.cruisefeed.io/v1/cruises/:cruise_id",
+          "protocol": "https",
+          "host": [
+            "api",
+            "cruisefeed",
+            "io"
+          ],
+          "path": [
+            "v1",
+            "cruises",
+            ":cruise_id"
+          ],
+          "variable": [
+            {
+              "key": "cruise_id",
+              "value": "cru_9f3a2b71c4d5e6f7",
+              "description": ""
+            }
+          ]
+        },
+        "description": "Fetch a single sailing by its opaque id (the id field on every cruise record), enriched with the matched ship object."
+      },
+      "response": []
+    },
+    {
+      "name": "Get a cruise's price history",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{apiKey}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "https://api.cruisefeed.io/v1/cruises/:cruise_id/history",
+          "protocol": "https",
+          "host": [
+            "api",
+            "cruisefeed",
+            "io"
+          ],
+          "path": [
+            "v1",
+            "cruises",
+            ":cruise_id",
+            "history"
+          ],
+          "variable": [
+            {
+              "key": "cruise_id",
+              "value": "cru_9f3a2b71c4d5e6f7",
+              "description": ""
+            }
+          ]
+        },
+        "description": "Point-in-time price snapshots for one sailing, oldest to newest, so you can track how a fare has moved over time."
+      },
+      "response": []
+    },
+    {
+      "name": "List recent price changes",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{apiKey}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "https://api.cruisefeed.io/v1/changes?limit=100&offset=0",
+          "protocol": "https",
+          "host": [
+            "api",
+            "cruisefeed",
+            "io"
+          ],
+          "path": [
+            "v1",
+            "changes"
+          ],
+          "query": [
+            {
+              "key": "since",
+              "value": "",
+              "description": "[string] Only changes on/after this date (default: last 30 days)",
+              "disabled": true
+            },
+            {
+              "key": "cruise_line",
+              "value": "",
+              "description": "[string]",
+              "disabled": true
+            },
+            {
+              "key": "limit",
+              "value": "100",
+              "description": "[integer]"
+            },
+            {
+              "key": "offset",
+              "value": "0",
+              "description": "[integer]"
+            }
+          ]
+        },
+        "description": "Sailings whose lead-in price changed between the two most recent snapshots. Poll daily for fare-drop alerts after an initial full catalog pull."
+      },
+      "response": []
+    },
+    {
+      "name": "List cruise lines",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{apiKey}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "https://api.cruisefeed.io/v1/cruise-lines",
+          "protocol": "https",
+          "host": [
+            "api",
+            "cruisefeed",
+            "io"
+          ],
+          "path": [
+            "v1",
+            "cruise-lines"
+          ]
+        },
+        "description": "List the distinct cruise line names present in the feed, useful for populating filter dropdowns in your application."
+      },
+      "response": []
+    },
+    {
+      "name": "List & filter ships",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{apiKey}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "https://api.cruisefeed.io/v1/ships?limit=50&offset=0",
+          "protocol": "https",
+          "host": [
+            "api",
+            "cruisefeed",
+            "io"
+          ],
+          "path": [
+            "v1",
+            "ships"
+          ],
+          "query": [
+            {
+              "key": "q",
+              "value": "",
+              "description": "[string] Optional. Case-insensitive ship-name search.",
+              "disabled": true
+            },
+            {
+              "key": "operator",
+              "value": "",
+              "description": "[string] Optional. Filter by operator (partial match).",
+              "disabled": true
+            },
+            {
+              "key": "flag_state",
+              "value": "",
+              "description": "[string] Optional. Filter by flag state (partial match).",
+              "disabled": true
+            },
+            {
+              "key": "limit",
+              "value": "50",
+              "description": "[integer] Max rows to return."
+            },
+            {
+              "key": "offset",
+              "value": "0",
+              "description": "[integer] Rows to skip."
+            }
+          ]
+        },
+        "description": "List and filter vessel metadata (capacity, tonnage, dimensions, decks, cabins, builder, class, flag) for 1,500+ ships."
+      },
+      "response": []
+    },
+    {
+      "name": "Get a ship by IMO",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{apiKey}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "https://api.cruisefeed.io/v1/ships/:ship_id",
+          "protocol": "https",
+          "host": [
+            "api",
+            "cruisefeed",
+            "io"
+          ],
+          "path": [
+            "v1",
+            "ships",
+            ":ship_id"
+          ],
+          "variable": [
+            {
+              "key": "ship_id",
+              "value": "9187796",
+              "description": ""
+            }
+          ]
+        },
+        "description": "Fetch a single vessel by its source id, which is the IMO number (for example 9187796) or a URL slug when the IMO is absent."
+      },
+      "response": []
+    },
+    {
+      "name": "List departure ports",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{apiKey}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "https://api.cruisefeed.io/v1/ports",
+          "protocol": "https",
+          "host": [
+            "api",
+            "cruisefeed",
+            "io"
+          ],
+          "path": [
+            "v1",
+            "ports"
+          ]
+        },
+        "description": "List the distinct embarkation (departure) ports present in the feed, useful for populating filter dropdowns."
+      },
+      "response": []
+    },
+    {
+      "name": "Catalogue stats",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{apiKey}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "https://api.cruisefeed.io/v1/stats",
+          "protocol": "https",
+          "host": [
+            "api",
+            "cruisefeed",
+            "io"
+          ],
+          "path": [
+            "v1",
+            "stats"
+          ]
+        },
+        "description": "Feed-level counts and freshness statistics for the whole dataset, such as total sailings, ships, and last refresh time."
+      },
+      "response": []
+    }
+  ],
+  "variable": [
+    {
+      "key": "apiKey",
+      "value": "",
+      "type": "string"
+    }
+  ]
+}

@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: CruiseFeed API
-  version: "1.0.0"
+  version: "1.2.2"
   description: >
     The CruiseFeed API delivers normalized cruise inventory data — cruise lines,
     ships, sailing dates, day-by-day itineraries, ports of call and lead-in
@@ -38,10 +38,31 @@ tags:
   - name: History
     description: Price & availability change tracking.
   - name: Reference
-    description: Reference lists (cruise lines, ships, ports). Requires an API key.
+    description: Reference lists and catalogue stats. Requires an API key.
+  - name: Health
+    description: Unauthenticated service liveness.
 
 paths:
-  /cruises:
+  /healthz:
+    get:
+      tags: [Health]
+      summary: Health check
+      description: >
+        Liveness probe and the only unauthenticated endpoint. Returns 200 with
+        `{"status":"ok"}` when the API is up. No API key required.
+      operationId: healthz
+      security: []
+      responses:
+        "200":
+          description: Service is up.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: { type: string }
+              example: { status: ok }
+
+  /v1/cruises:
     get:
       tags: [Cruises]
       summary: List & filter cruises
@@ -50,7 +71,7 @@ paths:
         combine any of the filters below. Results are deduplicated by default.
       operationId: listCruises
       parameters:
-        - { name: cruise_line, in: query, schema: { type: string }, description: "Exact cruise line name (see GET /cruise-lines)." }
+        - { name: cruise_line, in: query, schema: { type: string }, description: "Exact cruise line name (see GET /v1/cruise-lines)." }
         - { name: ship_name, in: query, schema: { type: string }, description: "Exact ship name." }
         - { name: embark_port, in: query, schema: { type: string }, description: "Departure (embarkation) port." }
         - { name: region, in: query, schema: { type: string }, description: "Destination/region, partial match (e.g. Caribbean)." }
@@ -74,11 +95,11 @@ paths:
         "401":
           $ref: "#/components/responses/Unauthorized"
 
-  /cruises.csv:
+  /v1/cruises.csv:
     get:
       tags: [Cruises]
       summary: Export cruises as CSV
-      description: Same filters as `GET /cruises`, streamed as a CSV file for spreadsheets and warehouse loads.
+      description: Same filters as `GET /v1/cruises`, streamed as a CSV file for spreadsheets and warehouse loads.
       operationId: exportCruisesCsv
       parameters:
         - { name: cruise_line, in: query, schema: { type: string } }
@@ -102,14 +123,14 @@ paths:
         "401":
           $ref: "#/components/responses/Unauthorized"
 
-  /cruises/{id}:
+  /v1/cruises/{cruise_id}:
     get:
       tags: [Cruises]
       summary: Get a single cruise
       description: Fetch one sailing by its opaque id (returned on every record).
       operationId: getCruise
       parameters:
-        - { name: id, in: path, required: true, schema: { type: string }, description: "The opaque cruise id." }
+        - { name: cruise_id, in: path, required: true, schema: { type: string }, description: "The opaque cruise id." }
       responses:
         "200":
           description: The sailing, enriched with its matched ship.
@@ -119,14 +140,14 @@ paths:
         "401": { $ref: "#/components/responses/Unauthorized" }
         "404": { $ref: "#/components/responses/NotFound" }
 
-  /cruises/{id}/history:
+  /v1/cruises/{cruise_id}/history:
     get:
       tags: [History]
       summary: Price & availability history
       description: Point-in-time price snapshots for a sailing, oldest to newest — track how a fare has moved.
       operationId: getCruiseHistory
       parameters:
-        - { name: id, in: path, required: true, schema: { type: string }, description: "The opaque cruise id." }
+        - { name: cruise_id, in: path, required: true, schema: { type: string }, description: "The opaque cruise id." }
       responses:
         "200":
           description: Price history for the sailing.
@@ -136,7 +157,7 @@ paths:
         "401": { $ref: "#/components/responses/Unauthorized" }
         "404": { $ref: "#/components/responses/NotFound" }
 
-  /changes:
+  /v1/changes:
     get:
       tags: [History]
       summary: Recent price changes
@@ -155,7 +176,7 @@ paths:
               schema: { $ref: "#/components/schemas/ChangePage" }
         "401": { $ref: "#/components/responses/Unauthorized" }
 
-  /ships:
+  /v1/ships:
     get:
       tags: [Ships]
       summary: List & filter ships
@@ -178,7 +199,7 @@ paths:
         "401":
           $ref: "#/components/responses/Unauthorized"
 
-  /ships/{ship_id}:
+  /v1/ships/{ship_id}:
     get:
       tags: [Ships]
       summary: Get a single ship
@@ -195,7 +216,7 @@ paths:
         "401": { $ref: "#/components/responses/Unauthorized" }
         "404": { $ref: "#/components/responses/NotFound" }
 
-  /cruise-lines:
+  /v1/cruise-lines:
     get:
       tags: [Reference]
       summary: List cruise line names
@@ -208,8 +229,9 @@ paths:
             application/json:
               schema: { $ref: "#/components/schemas/ValueList" }
               example: { items: ["AIDA Cruises", "Carnival", "MSC Cruises", "Royal Caribbean", "Viking"], total: 5 }
+        "401": { $ref: "#/components/responses/Unauthorized" }
 
-  /ports:
+  /v1/ports:
     get:
       tags: [Reference]
       summary: List departure ports
@@ -221,13 +243,28 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/ValueList" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  /v1/stats:
+    get:
+      tags: [Reference]
+      summary: Catalogue stats
+      description: Feed-level totals and freshness — total sailing rows, unique sailings after dedupe, and last refresh time.
+      operationId: getStats
+      responses:
+        "200":
+          description: Catalogue statistics.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Stats" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
 
 components:
   securitySchemes:
     BearerAuth:
       type: http
       scheme: bearer
-      description: Your CruiseFeed API key as a Bearer token. Get one at https://cruisefeed.io.
+      description: "Your CruiseFeed API key as a Bearer token (`Authorization: Bearer <key>`). Get one at https://cruisefeed.io."
 
   responses:
     Unauthorized:
@@ -235,7 +272,7 @@ components:
       content:
         application/json:
           schema: { $ref: "#/components/schemas/Error" }
-          example: { error: { code: unauthorized, message: "Invalid or missing API key." } }
+          example: { error: { code: unauthorized, message: "Invalid or missing API key. Send 'Authorization: Bearer <key>'." } }
     NotFound:
       description: No matching record.
       content:
@@ -278,6 +315,15 @@ components:
       properties:
         items: { type: array, items: { type: string } }
         total: { type: integer, example: 6 }
+
+    Stats:
+      type: object
+      description: Feed-level catalogue statistics.
+      properties:
+        total: { type: integer, example: 18432, description: "Total sailing rows in the feed." }
+        unique_total: { type: integer, example: 8110, description: "Distinct sailings after dedupe." }
+        last_updated: { type: string, format: date-time, nullable: true, example: "2026-07-03T04:12:00Z", description: "When the catalogue was last refreshed." }
+      required: [total, unique_total]
 
     Fare:
       type: object
