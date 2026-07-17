@@ -39,7 +39,7 @@ curl "https://<username>--cruise-data-api.apify.actor/cruises?region=Caribbean&m
   -H "Authorization: Bearer $APIFY_TOKEN"
 
 # one ship by IMO number, with full specs
-curl "https://<username>--cruise-data-api.apify.actor/ships/9839419" \
+curl "https://<username>--cruise-data-api.apify.actor/ships/9837420" \
   -H "Authorization: Bearer $APIFY_TOKEN"
 ```
 
@@ -75,47 +75,79 @@ it's empty when the line quotes only a single "from" price.
 
 `cruise_line` · `ship_name` · `embark_port` · `region` (partial) ·
 `departure_from` · `departure_to` · `min_price` · `max_price` · `min_nights` ·
-`max_nights` · `round_trip` · `dedupe` (default true) · `sort` (default
-`departure_date`) · `limit` (1–500, default 50) · `offset`.
+`max_nights` · `round_trip` · `dedupe` (default true) · `include_past` (default
+false) · `sort` · `limit` (1–500, default 50) · `offset`.
+
+`sort` accepts exactly `departure_date` (default), `-departure_date`, `price`,
+`-price` — a `-` prefix means descending, and anything else is a `400`. There is
+no `price_amount` sort, despite the response field being called `price_amount`.
+
+The listing returns **upcoming sailings only**; the catalogue reaches back to
+2015 and ~98% of departed sailings carry no price. Pass `include_past=true` for
+history, or set `departure_from` / `departure_to` to take control of the window.
 
 ## Example: list cruises
 
 **Request**
 
 ```bash
-curl "https://<username>--cruise-data-api.apify.actor/cruises?cruise_line=MSC%20Cruises&max_price=1500&min_nights=5&limit=1" \
+curl "https://<username>--cruise-data-api.apify.actor/cruises?cruise_line=MSC%20Cruises&min_price=1&min_nights=5&limit=1" \
   -H "Authorization: Bearer $APIFY_TOKEN"
 ```
 
-**Response**
+**Response** (a real record, itinerary trimmed to two stops — note how much of a
+typical sailing is `null`)
 
 ```json
 {
   "items": [
     {
-      "id": "cru_4f2a9c1b7e3d5068",
+      "id": "cru_27fad303985bed3f",
       "cruise_line": "MSC Cruises",
-      "ship_name": "MSC World Europa",
-      "title": "7-Night Western Mediterranean",
-      "departure_date": "2026-09-12",
-      "return_date": "2026-09-19",
-      "duration_days": 8,
+      "ship_name": "MSC Seaview",
+      "title": "7 days, round-trip Mediterranean",
+      "departure_date": "2026-06-01",
+      "return_date": "2026-06-08",
+      "duration_days": 7,
       "nights": 7,
       "round_trip": true,
-      "embark_port": "Barcelona",
-      "disembark_port": "Barcelona",
-      "region": "Western Mediterranean",
-      "price_amount": 799,
-      "price_currency": "EUR",
-      "price_per_night": 114.14,
+      "embark_port": "Palermo, Sicily Italy",
+      "disembark_port": "Palermo, Sicily Italy",
+      "region": "Mediterranean",
+      "ship_code": null,
+      "destination_code": null,
+      "sea_days": 0,
+      "port_count": 6,
+      "price_amount": 1028.0,
+      "price_currency": "USD",
+      "price_per_night": 146.86,
+      "taxes_and_fees": null,
+      "taxes_currency": null,
+      "obc_amount": null,
+      "sold_out": null,
+      "fares": [],
       "itinerary": [
-        { "seq": 1, "port": "Barcelona", "date_raw": "12 Sep", "is_embark": true, "is_disembark": false },
-        { "seq": 2, "port": "Marseille", "date_raw": "13 Sep", "is_embark": false, "is_disembark": false }
+        {
+          "seq": 1, "day_number": 1, "date": "2026-06-01",
+          "port": "Palermo, Sicily Italy", "date_raw": "01 Jun 20:00",
+          "arrive": null, "depart": "01 Jun 20:00",
+          "is_embark": true, "is_disembark": false, "is_sea_day": false
+        },
+        {
+          "seq": 2, "day_number": 3, "date": "2026-06-03",
+          "port": "Ibiza, Ibiza Island Balearic Spain",
+          "date_raw": "03 Jun 11:30 - 23:00", "arrive": "03 Jun 11:30",
+          "depart": "23:00", "is_embark": false, "is_disembark": false,
+          "is_sea_day": false
+        }
       ],
-      "scraped_at": "2026-06-28T04:12:00Z"
+      "booking_url": null,
+      "detail_url": null,
+      "image_url": null,
+      "scraped_at": "2026-07-12T04:04:32.444119"
     }
   ],
-  "total": 1843,
+  "total": 6122,
   "limit": 1,
   "offset": 0
 }
@@ -144,7 +176,7 @@ curl "https://<username>--cruise-data-api.apify.actor/ships?q=world%20europa" \
   -H "Authorization: Bearer $APIFY_TOKEN"
 
 # one ship by IMO (tonnage, decks, cabins, capacity, builder, sister ships)
-curl "https://<username>--cruise-data-api.apify.actor/ships/9839419" \
+curl "https://<username>--cruise-data-api.apify.actor/ships/9837420" \
   -H "Authorization: Bearer $APIFY_TOKEN"
 ```
 
@@ -175,8 +207,15 @@ current rates.
 | `duration_days`, `nights` | integer | |
 | `round_trip` | boolean | |
 | `embark_port`, `disembark_port`, `region` | string | |
+| `ship_code`, `destination_code` | string | Line-specific codes, when exposed |
+| `sea_days`, `port_count` | integer | Days at sea / ports of call on the itinerary |
 | `price_amount`, `price_currency`, `price_per_night` | number | Lead-in fare (may be null) |
+| `taxes_and_fees`, `taxes_currency` | number/string | Taxes & fees when itemized |
+| `obc_amount` | number | Bundled onboard credit, when advertised |
+| `sold_out` | boolean | Listed but no longer bookable |
+| `fares` | array | Per-cabin-class breakdown (partial across lines) |
 | `itinerary` | array | `{ seq, port, date_raw, is_embark, is_disembark }` per stop |
+| `booking_url`, `detail_url`, `image_url` | string | Deep links and a representative image |
 | `scraped_at` | datetime | ISO 8601 |
 
 The `/ships` endpoints add vessel specs: IMO, operator, year built, capacity,
